@@ -1,0 +1,148 @@
+if game:GetService("CoreGui"):FindFirstChild("JJS_TargetMenu") then game:GetService("CoreGui"):FindFirstChild("JJS_TargetMenu"):Destroy() end
+local JJS_TargetMenu, MainFrame, Title, CloseMenuBtn, ToggleBtn, TargetLabel, PlayerListFrame, UIListLayout, MobileMenuBtn, UICornerBtn = Instance.new("ScreenGui"), Instance.new("Frame"), Instance.new("TextLabel"), Instance.new("TextButton"), Instance.new("TextButton"), Instance.new("TextLabel"), Instance.new("ScrollingFrame"), Instance.new("UIListLayout"), Instance.new("TextButton"), Instance.new("UICorner")
+JJS_TargetMenu.Name = "JJS_TargetMenu" JJS_TargetMenu.Parent = game:GetService("CoreGui") JJS_TargetMenu.ResetOnSpawn = false
+MobileMenuBtn.Name = "MobileMenuBtn" MobileMenuBtn.Parent = JJS_TargetMenu MobileMenuBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0) MobileMenuBtn.Position = UDim2.new(0.05, 0, 0.25, 0) MobileMenuBtn.Size = UDim2.new(0, 50, 0, 50) MobileMenuBtn.Font = Enum.Font.SourceSansBold MobileMenuBtn.Text = "JJS" MobileMenuBtn.TextColor3 = Color3.fromRGB(255, 255, 255) MobileMenuBtn.TextSize = 16 MobileMenuBtn.Active = true MobileMenuBtn.Visible = false UICornerBtn.CornerRadius = UDim.new(0, 25) UICornerBtn.Parent = MobileMenuBtn
+MainFrame.Name = "MainFrame" MainFrame.Parent = JJS_TargetMenu MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25) MainFrame.BorderColor3 = Color3.fromRGB(255, 0, 0) MainFrame.BorderSizePixel = 2 MainFrame.Position = UDim2.new(0.3, 0, 0.25, 0) MainFrame.Size = UDim2.new(0, 320, 0, 300) MainFrame.Active = true MainFrame.Visible = true
+Title.Name = "Title" Title.Parent = MainFrame Title.BackgroundColor3 = Color3.fromRGB(15, 15, 15) Title.Size = UDim2.new(1, 0, 0, 35) Title.Font = Enum.Font.SourceSansBold Title.Text = "  JJS - Chơi thằng hack" Title.TextColor3 = Color3.fromRGB(255, 255, 255) Title.TextSize = 15 Title.TextXAlignment = Enum.TextXAlignment.Left
+CloseMenuBtn.Name = "CloseMenuBtn" CloseMenuBtn.Parent = MainFrame CloseMenuBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0) CloseMenuBtn.Position = UDim2.new(1, -35, 0, 0) CloseMenuBtn.Size = UDim2.new(0, 35, 0, 35) CloseMenuBtn.Font = Enum.Font.SourceSansBold CloseMenuBtn.Text = "X" CloseMenuBtn.TextColor3 = Color3.fromRGB(255, 255, 255) CloseMenuBtn.TextSize = 16
+ToggleBtn.Name = "ToggleBtn" ToggleBtn.Parent = MainFrame ToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0) ToggleBtn.Position = UDim2.new(0.05, 0, 0.15, 0) ToggleBtn.Size = UDim2.new(0, 288, 0, 40) ToggleBtn.Font = Enum.Font.SourceSansBold ToggleBtn.Text = "Trạng thái: TẮT" ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255) ToggleBtn.TextSize = 16
+TargetLabel.Name = "TargetLabel" TargetLabel.Parent = MainFrame TargetLabel.BackgroundTransparency = 1 TargetLabel.Position = UDim2.new(0.05, 0, 0.30, 0) TargetLabel.Size = UDim2.new(0, 288, 0, 25) TargetLabel.Font = Enum.Font.SourceSansBold TargetLabel.Text = "Mục tiêu: Chưa chọn" TargetLabel.TextColor3 = Color3.fromRGB(255, 255, 0) TargetLabel.TextSize = 14 TargetLabel.TextXAlignment = Enum.TextXAlignment.Left
+PlayerListFrame.Name = "PlayerListFrame" PlayerListFrame.Parent = MainFrame PlayerListFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35) PlayerListFrame.BorderColor3 = Color3.fromRGB(50, 50, 50) PlayerListFrame.Position = UDim2.new(0.05, 0, 0.40, 0) PlayerListFrame.Size = UDim2.new(0, 288, 0, 160) PlayerListFrame.ScrollBarThickness = 6 PlayerListFrame.ClipsDescendants = true UIListLayout.Parent = PlayerListFrame UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder UIListLayout.Padding = UDim.new(0, 4)
+
+local UserInputService = game:GetService("UserInputService")
+local function makeDraggable(gui)
+    local dragging, dragInput, dragStart, startPos
+    gui.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging, dragStart, startPos = true, input.Position, gui.Position
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+        end
+    end)
+    gui.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+makeDraggable(MobileMenuBtn) makeDraggable(MainFrame)
+
+_G.AutoBehind, _G.SelectedTarget = false, nil
+local Distance, MaxStepDistance = 3.8, 40
+local Players, LocalPlayer, RunService = game:GetService("Players"), game:GetService("Players").LocalPlayer, game:GetService("RunService")
+
+local function resetToggleState(msg)
+    _G.AutoBehind = false ToggleBtn.Text = msg or "Trạng thái: TẮT" ToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+end
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    if _G.SelectedTarget then
+        _G.AutoBehind = not _G.AutoBehind
+        if _G.AutoBehind then ToggleBtn.Text, ToggleBtn.BackgroundColor3 = "Trạng thái: BẬT", Color3.fromRGB(0, 180, 0) else resetToggleState() end
+    else TargetLabel.Text = "Mục tiêu: Vui lòng chọn người chơi!" end
+end)
+
+CloseMenuBtn.MouseButton1Click:Connect(function() MainFrame.Visible, MobileMenuBtn.Visible = false, true end)
+MobileMenuBtn.MouseButton1Click:Connect(function() MainFrame.Visible, MobileMenuBtn.Visible = true, false end)
+UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y) end)
+
+local function updatePlayerList()
+    for _, child in pairs(PlayerListFrame:GetChildren()) do if child:IsA("TextButton") then child:Destroy() end end
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local pBtn = Instance.new("TextButton")
+            pBtn.Size, pBtn.BackgroundColor3, pBtn.Font = UDim2.new(1, -6, 0, 30), Color3.fromRGB(45, 45, 45), Enum.Font.SourceSans
+            pBtn.Text, pBtn.TextColor3, pBtn.TextSize, pBtn.TextXAlignment, pBtn.Parent = " " .. player.DisplayName .. " (@" .. player.Name .. ")", Color3.fromRGB(255, 255, 255), 14, Enum.TextXAlignment.Left, PlayerListFrame
+            pBtn.MouseButton1Click:Connect(function() _G.SelectedTarget = player TargetLabel.Text = "Mục tiêu: " .. player.Name end)
+        end
+    end
+end
+updatePlayerList() Players.PlayerAdded:Connect(updatePlayerList)
+Players.PlayerRemoving:Connect(function(player) if _G.SelectedTarget == player then _G.SelectedTarget = nil resetToggleState("Mục tiêu đã sợ và đi về!") end updatePlayerList() end)
+
+-- VÒNG LẶP SMOOTH ANTI-JITTER
+RunService.PreSimulation:Connect(function()
+    if _G.AutoBehind and _G.SelectedTarget then
+        local target = _G.SelectedTarget
+        if target.Character and target.Character:FindFirstChild("HumanoidRootPart") and target.Character:FindFirstChild("Humanoid") and target.Character.Humanoid.Health > 0 then
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local targetHRP, localCharacter = target.Character.HumanoidRootPart, LocalPlayer.Character
+                local localHRP = localCharacter.HumanoidRootPart
+                
+                -- NOCLIP & KHÓA QUYỀN SỞ HỮU MẠNG LOCAL (Bypass lag vật lý)
+                for _, part in pairs(localCharacter:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                        if part.ReceiveAge then part.Velocity = Vector3.new(0,0,0) end -- Khóa quán tính từng part
+                    end
+                end
+                
+                -- Đóng băng triệt để vận tốc
+                localHRP.Velocity = Vector3.new(0, 0, 0)
+                localHRP.RotVelocity = Vector3.new(0, 0, 0)
+                
+                -- Tính toán vị trí sau lưng
+                local targetPosition = targetHRP.Position - (targetHRP.CFrame.LookVector * Distance)
+                local currentPosition = localHRP.Position
+                local currentDistance = (targetPosition - currentPosition).Magnitude
+                
+                -- Tạo mục tiêu CFrame mượt mà hướng thẳng vào đối thủ
+                local goalCFrame = CFrame.new(targetPosition, targetHRP.Position)
+                
+                if currentDistance > MaxStepDistance then
+                    local direction = (targetPosition - currentPosition).Unit
+                    local nextPosition = currentPosition + (direction * MaxStepDistance)
+                    localHRP.CFrame = CFrame.new(nextPosition, targetHRP.Position)
+                else
+                    -- Dùng Lerp nhẹ 0.85 để làm mượt khung hình, triệt tiêu hiện tượng sọc rung màn hình
+                    localHRP.CFrame = localHRP.CFrame:Lerp(goalCFrame, 0.85)
+                end
+            end
+        end
+    end
+end)
+-- VÒNG LẶP SMOOTH ANTI-JITTER HOÀN CHỈNH (KHÔNG CÓ UI - DÙNG ĐỂ NỐI)
+local Distance, MaxStepDistance = 3.8, 40
+local Players, LocalPlayer, RunService = game:GetService("Players"), game:GetService("Players").LocalPlayer, game:GetService("RunService")
+
+RunService.PreSimulation:Connect(function()
+    if _G.AutoBehind and _G.SelectedTarget then
+        local target = _G.SelectedTarget
+        if target.Character and target.Character:FindFirstChild("HumanoidRootPart") and target.Character:FindFirstChild("Humanoid") and target.Character.Humanoid.Health > 0 then
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local targetHRP, localCharacter = target.Character.HumanoidRootPart, LocalPlayer.Character
+                local localHRP = localCharacter.HumanoidRootPart
+                
+                -- NOCLIP & KHÓA QUYỀN SỞ HỮU MẠNG LOCAL
+                for _, part in pairs(localCharacter:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+                
+                -- Đóng băng triệt để vận tốc
+                localHRP.Velocity = Vector3.new(0, 0, 0)
+                localHRP.RotVelocity = Vector3.new(0, 0, 0)
+                
+                if localCharacter:FindFirstChild("Humanoid") then 
+                    localCharacter.Humanoid:ChangeState(Enum.HumanoidStateType.Physics) 
+                end
+                
+                -- Tính toán vị trí sau lưng
+                local targetPosition = targetHRP.Position - (targetHRP.CFrame.LookVector * Distance)
+                local currentPosition = localHRP.Position
+                local currentDistance = (targetPosition - currentPosition).Magnitude
+                local goalCFrame = CFrame.new(targetPosition, targetHRP.Position)
+                
+                if currentDistance > MaxStepDistance then
+                    local direction = (targetPosition - currentPosition).Unit
+                    local nextPosition = currentPosition + (direction * MaxStepDistance)
+                    localHRP.CFrame = CFrame.new(nextPosition, targetHRP.Position)
+                else
+                    localHRP.CFrame = localHRP.CFrame:Lerp(goalCFrame, 0.85)
+                end
+            end
+        end
+    end
+end)
