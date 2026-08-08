@@ -102,3 +102,43 @@ RunService.PreSimulation:Connect(function()
         end
     end
 end)
+--[Code rút gọn - Vui lòng xem chi tiết tại nguồn]
+-- 2. HỆ THỐNG DI CHUYỂN KÉO THẢ (DRAGGABLE) MƯỢT MÀ
+local UserInputService = game:GetService("UserInputService")
+local function makeDraggable(gui)
+    -- ... (Logic xử lý kéo thả UI) ...
+end
+makeDraggable(MainFrame)
+
+-- 3. BIẾN TOÀN CỤC & TÍNH NĂNG AI
+_G.AutoBehind = false 
+_G.SelectedTarget = nil
+local PathfindingService = game:GetService("PathfindingService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+-- Cấu hình Pathfinding, xử lý chọn mục tiêu, update list...
+-- ... (Logics chọn mục tiêu từ PlayerListFrame) ...
+
+-- 4. VÒNG LẶP AI CHÍNH: TỰ ĐỘNG TÌM ĐƯỜNG (PATHFINDING)
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+        if _G.AutoBehind and _G.SelectedTarget then
+            pcall(function()
+                -- ... (Noclip, tính toán đường đi, di chuyển, nhảy, tự quay góc nhìn) ...
+            end)
+        end
+    end
+end)
+
+-- 5. VÒNG LẶP PHỤ: TỰ ĐỘNG COMBO ĐÁNH THƯỜNG (AUTO ATTACK M1)
+task.spawn(function()
+    while true do
+        task.wait(0.2)
+        if _G.AutoBehind and _G.SelectedTarget then
+            pcall(function()
+                -- ... (Kiểm tra khoảng cách, giả lập M1) ...
+            end)
+        end
+    end
+end)
