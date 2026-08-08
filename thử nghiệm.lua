@@ -102,6 +102,83 @@ RunService.PreSimulation:Connect(function()
         end
     end
 end)
+-- 2. HỆ THỐNG KIỂM TRA VÀ TỰ ĐỘNG ĐỠ ĐÒN (AUTO BLOCK F)
+task.spawn(function()
+    while true do
+        task.wait(0.01) -- Quét liên tục với tốc độ cực cao để đỡ kịp chiêu nhanh
+        if _G.AutoBlock and _G.SelectedTarget then
+            pcall(function()
+                local targetChar = _G.SelectedTarget.Character
+                if targetChar and targetChar:FindFirstChild("Humanoid") then
+                    local targetHumanoid = targetChar.Humanoid
+                    local animator = targetHumanoid:FindFirstChildOfClass("Animator")
+                    
+                    local enemyIsAttacking = false
+                    
+                    -- Cách 1: Quét toàn bộ hoạt ảnh (Animation) đối thủ đang dùng
+                    if animator then
+                        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                            local animName = string.lower(track.Name)
+                            local animId = track.Animation.AnimationId
+                            
+                            -- Nếu tên hoạt ảnh chứa các từ khóa tấn công hoặc có cử động xuất chiêu
+                            if string.find(animName, "attack") or string.find(animName, "punch") or string.find(animName, "slash") or string.find(animName, "m1") or string.find(animName, "skill") then
+                                enemyIsAttacking = true
+                                break
+                            end
+                        end
+                    end
+                    
+                    -- Cách 2: Quét thuộc tính trạng thái (Dự phòng cho một số bản mod JJS)
+                    if targetChar:FindFirstChild("Attacking") and targetChar.Attacking.Value == true then
+                        enemyIsAttacking = true
+                    end
+                    
+                    -- Thống kê khoảng cách (chỉ đỡ khi đối thủ ở gần để tránh bị lãng phí/gạt giò)
+                    local localHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    local targetHRP = targetChar:FindFirstChild("HumanoidRootPart")
+                    local distance = (localHRP and targetHRP) and (localHRP.Position - targetHRP.Position).Magnitude or 999
+                    
+                    -- THỰC HIỆN ĐỠ ĐÒN
+                    if enemyIsAttacking and distance < 15 then
+                        if not isBlocking then
+                            -- Giả lập nhấn ĐÈ phím F (Đỡ đòn)
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+                            isBlocking = true
+                        end
+                    else
+                        if isBlocking then
+                            -- Giả lập NHẢ phím F khi đối thủ hết đánh
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+                            isBlocking = false
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+ -- 3. THUẬT TOÁN AI DỰ ĐOÁN VỊ TRÍ & NÉ SÁT THƯƠNG (ANTI-SPEED HACK)
+RunService.PreSimulation:Connect(function()
+    if _G.AI_Follow and _G.SelectedTarget then
+        pcall(function()
+            local targetChar = _G.SelectedTarget.Character
+            local localChar = LocalPlayer.Character
+            
+            if targetChar and targetChar:FindFirstChild("HumanoidRootPart") and localChar and localChar:FindFirstChild("HumanoidRootPart") then
+                local targetHRP = targetChar.HumanoidRootPart
+                local localHRP = localChar.HumanoidRootPart
+                
+                -- NOCLIP: Xuyên tường, xuyên người không lo bị kẹt vật lý
+                for _, part in ipairs(localChar:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+                
+                -- KHÓA VẬN TỐC: Tránh lỗi đồng bộ Server khiến Hitbox của địch quét trúng
+                localHRP.Velocity = Vector3.zero
+                localHRP.RotVelocity = Vector3.zero
 --[Code rút gọn - Vui lòng xem chi tiết tại nguồn]
 -- 2. HỆ THỐNG DI CHUYỂN KÉO THẢ (DRAGGABLE) MƯỢT MÀ
 local UserInputService = game:GetService("UserInputService")
